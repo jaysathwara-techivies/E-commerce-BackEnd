@@ -49,6 +49,10 @@ const orderSchema = new mongoose.Schema({
     deliverdAt: {
         type: Date,
         default: null
+    },
+    chargeId: {
+        type:String,
+        default: null
     }
     
 });

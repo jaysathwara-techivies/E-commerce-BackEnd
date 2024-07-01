@@ -29,7 +29,6 @@ async function decreaseStock(items) {
 }
 
 const getOrderHistory = async (request, h) => {
-  console.log('request: ', request);
   try {
     const userId = request.auth.credentials.user;
     console.log('userId: ', userId);
@@ -103,7 +102,6 @@ const mostSellingProducts = async (request, h) =>{
 
 const stripePayment = async (request, h) =>{
   try {
-    console.log('request.payload: ', request.payload);
     const {token ,amount} = request.payload
     const charge = await stripe.charges.create({
       amount: amount * 100, 
@@ -241,8 +239,16 @@ const cancelOrder = async (request, h) => {
     }
 
     await order.save();
-
-    return h.response({ message: 'Order canceled successfully and products restocked' }).code(200);
+    const chargeId = order.chargeId;
+    console.log('chargeId: ', chargeId);
+    if (chargeId) {
+      const refund = await stripe.refunds.create({
+          charge: chargeId
+      });
+      return h.response({ message: 'Order canceled successfully, products restocked, and payment refunded', refund }).code(200);
+  } else {
+      return h.response({ message: 'Order canceled successfully and products restocked, but no charge ID found for refund' }).code(200);
+  }
   } catch (error) {
     console.error(error);
     return h.response({ error: 'Internal Server Error' }).code(500);
