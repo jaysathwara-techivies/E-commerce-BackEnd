@@ -31,8 +31,7 @@ async function decreaseStock(items) {
 const getOrderHistory = async (request, h) => {
   try {
     const userId = request.auth.credentials.user;
-    console.log('userId: ', userId);
-
+    const { page = 1, limit = 5 } = request.query;
     const orders = await Order.aggregate([
       { $match: { user: new mongoose.Types.ObjectId(userId._id) } },
       { $unwind: '$items' },
@@ -44,8 +43,8 @@ const getOrderHistory = async (request, h) => {
           as: 'productDetails'
         }
       },
-        { $unwind: '$productDetails' },
-  	 {
+      { $unwind: '$productDetails' },
+      {
         $group: {
           _id: '$_id',
           user: { $first: '$user' },
@@ -62,10 +61,21 @@ const getOrderHistory = async (request, h) => {
           }
         }
       },
-      { $sort: { createdAt: -1 } }
+      { $sort: { createdAt: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: parseInt(limit) }
     ]);
 
-    return h.response(orders).code(200);
+    const totalOrders = await Order.countDocuments({ user: new mongoose.Types.ObjectId(userId._id) });
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    return h.response({
+      orders,
+      page:parseInt(page),
+      limit,
+      totalPages,
+      totalOrders
+    }).code(200);
   } catch (error) {
     console.error('Error fetching order history:', error);
     return h.response({ message: 'Server error' }).code(500);
@@ -164,6 +174,11 @@ const revenuePerUser = async (request, h) => {
     const result = await Order.aggregate(
       [
         {
+          $match:{
+            status:{$in :['delivered', 'shipped']}
+          }
+        },
+        {
           $group: {
             _id: "$user",
             totalRevenue: { $sum: "$total" }
@@ -179,6 +194,14 @@ const revenuePerUser = async (request, h) => {
         },
         {
           $unwind: "$user"
+        },
+        {
+          $sort: {
+            totalRevenue: -1
+          }
+        },
+        {
+          $limit: 10
         }
       ]
     )
