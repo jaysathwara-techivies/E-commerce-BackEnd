@@ -1,49 +1,46 @@
-const Review = require('../model/review')
+const Review = require('../model/review');
 
-const getReview = async (request, h) =>{
-    console.log('request: ', request);
-    try {
-        const {productId} = request.query
-        const reviews = await Review.find({productId}).populate('userId');
-        return h.response(reviews)
-    } catch (error) {
-        return h.response(error)
+const getReview = async (req, res) => {
+  try {
+    const { productId } = req.query;
+    const reviews = await Review.find({ productId }).populate('userId');
+    return res.status(200).json(reviews);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+const postReview = async (req, res) => {
+  try {
+    const { productId, userId, rating, reviewText } = req.body;
+    const review = new Review({ productId, userId, rating, reviewText });
+    await review.save();
+    return res.status(201).json(review);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+const deleteReview = async (req, res) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) {
+      return res.status(404).send();
     }
-}
+    return res.status(204).json({ msg: 'Review Delete Successfully.' });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
 
-const postReview = async (request, h) => {
-    console.log('request: ', request);
-    try {
-        const {productId, userId, rating, reviewText} = request.payload
-        const review = new Review({productId, userId, rating, reviewText})
-        await review.save()
-        return h.response(review)
-    } catch (error) {
-        return h.response(error)
-    }
-}
+const editReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const review = await Review.findByIdAndUpdate(id, req.body, { new: true });
+    return res.status(200).json(review);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
 
-const deleteReview = async (request, h) =>{
-    try {
-        const review = await Review.findByIdAndDelete(request.params.id);
-        if (!review) {
-            return h.response().code(404);
-        }
-        return h.response({msg: 'Review Delete Successfully.'}).code(204);                                                
-    } catch (error) {
-        return h.response(error).code(500);
-
-    }
-}
-
-const editReview = async (request, h) =>{
-    try {
-        const id = request.params.id
-        const review  = await Review.findByIdAndUpdate(id, request.payload)
-        return h.response(review)
-    } catch (error) {
-        return h.response(error)
-    }
-}
-
-module.exports = { getReview, postReview, deleteReview, editReview }
+module.exports = { getReview, postReview, deleteReview, editReview };

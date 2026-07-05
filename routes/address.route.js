@@ -1,19 +1,14 @@
-const { createAddress, getAddress, updateAddress} = require('../services/address')
+const express = require('express');
+const {
+  createAddress,
+  getAddress,
+  updateAddress,
+} = require('../services/address');
 
-module.exports = [
-    {   
-        method: 'POST',
-        path: '/address',
-        handler: createAddress
-    },
-    {   
-        method: 'GET',
-        path: '/address/{id}',
-        handler: getAddress
-    },
-    {   
-        method: 'PUT',
-        path: '/address/{id}',
-        handler: updateAddress
-    },
-]
+const router = express.Router();
+
+router.post('/address', createAddress);
+router.get('/address/:id', getAddress);
+router.put('/address/:id', updateAddress);
+
+module.exports = router;

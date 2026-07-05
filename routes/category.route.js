@@ -1,19 +1,15 @@
-const { createCategory, getCategories, deleteCategory } = require('../services/category')
+const express = require('express');
+const {
+  createCategory,
+  getCategories,
+  deleteCategory,
+} = require('../services/category');
+const { authenticate,authorize } = require('../middleware/auth');
 
-module.exports = [
-    {
-        method: 'POST',
-        path: '/categories',
-        handler: createCategory
-    },
-    {
-        method: 'GET',
-        path: '/categories',
-        handler: getCategories
-    },
-    {
-        method: 'DELETE',
-        path: '/categories/{id}',
-        handler: deleteCategory
-      }
-]
+const router = express.Router();
+
+router.post('/categories',authenticate,authorize('admin'), createCategory);
+router.get('/get-categories' ,getCategories);
+router.delete('/categories/:id', deleteCategory);
+
+module.exports = router;

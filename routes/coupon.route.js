@@ -1,14 +1,9 @@
-const {createCoupon, applyCouponCode} = require('../services//coupon')
+const express = require('express');
+const { createCoupon, applyCouponCode } = require('../services/coupon');
 
-module.exports = [
-    {
-        method: 'POST',
-        path: '/coupons',
-        handler: createCoupon
-    },
-    {
-        method: 'POST',
-        path: '/apply-coupon',
-        handler: applyCouponCode
-    }
-]
+const router = express.Router();
+
+router.post('/coupons', createCoupon);
+router.post('/apply-coupon', applyCouponCode);
+
+module.exports = router;

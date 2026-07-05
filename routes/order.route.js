@@ -1,64 +1,31 @@
-const {createOrder, getOrderHistory, mostSellingProducts, stripePayment, totalSaleOfEachProduct, revenuePerUser, ordersByDate, cancelOrder, getOrders, shipOrder, deliverOrder} = require('../services/order')
-const { protect } = require('../middleware/middleware');
+const express = require('express');
+const {
+  createOrder,
+  getOrderHistory,
+  mostSellingProducts,
+  stripePayment,
+  totalSaleOfEachProduct,
+  revenuePerUser,
+  ordersByDate,
+  cancelOrder,
+  getOrders,
+  shipOrder,
+  deliverOrder,
+} = require('../services/order');
+const { authenticate } = require('../middleware/auth');
 
-module.exports = [
-    {
-        method:'POST',
-        path: '/api/order',
-        handler: createOrder
-    },
-    {
-        method: 'GET',
-        path: '/api/orders/history',
-        options: {
-            auth: 'jwt',
-            pre: [{ method: protect }]
-        },
-        handler: getOrderHistory,
-    },
-    {
-        method: 'GET',
-        path: '/api/most-selling-product',
-        handler: mostSellingProducts
-    },
-    {
-        method: 'POST',
-        path: '/api/payment',
-        handler: stripePayment
-    },
-    {
-        method: 'GET',
-        path: '/api/order/totalsale',
-        handler: totalSaleOfEachProduct
-    },
-    {
-        method: 'GET',
-        path: '/api/order/totalrevenue',
-        handler: revenuePerUser
-    },
-    {
-        method: 'GET',
-        path: '/api/order/orderbydate',
-        handler: ordersByDate
-    },
-    {
-        method: 'POST',
-        path: '/api/order/{orderId}/cancel',
-        handler: cancelOrder
-    },
-    {
-        method: 'GET',
-        path: '/api/order',
-        handler: getOrders
-    },
-    {
-        method: 'POST',
-        path: '/api/order/{orderId}/ship',
-        handler: shipOrder
-    },
-    {
-        method: 'POST',
-        path: '/api/order/{orderId}/deliver',
-        handler: deliverOrder
-    }
-]
+const router = express.Router();
+
+router.post('/api/order', createOrder);
+router.get('/api/orders/history', authenticate, getOrderHistory);
+router.get('/api/most-selling-product', mostSellingProducts);
+router.post('/api/payment', stripePayment);
+router.get('/api/order/totalsale', totalSaleOfEachProduct);
+router.get('/api/order/totalrevenue', revenuePerUser);
+router.get('/api/order/orderbydate', ordersByDate);
+router.post('/api/order/:orderId/cancel', cancelOrder);
+router.get('/api/order', getOrders);
+router.post('/api/order/:orderId/ship', shipOrder);
+router.post('/api/order/:orderId/deliver', deliverOrder);
+
+module.exports = router;

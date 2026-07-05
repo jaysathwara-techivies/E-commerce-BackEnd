@@ -1,44 +1,40 @@
+const Coupon = require('../model/coupon');
 
-const Coupon = require('../model/coupon')
+const createCoupon = async (req, res) => {
+  try {
+    const { code, discount, expiryDate, usageLimit } = req.body;
+    const coupon = new Coupon({ code, discount, expiryDate, usageLimit });
+    await coupon.save();
+    return res.status(201).json(coupon);
+  } catch (error) {
+    console.log('error: ', error);
+    return res.status(500).json(error);
+  }
+};
 
-const createCoupon = async (request, h) =>{
-    console.log(' request.payload: ',  request.payload);
-    try {
-        const {code, discount, expiryDate, usageLimit} = request.payload;
-        const coupon = new Coupon({code, discount, expiryDate, usageLimit });
-        await coupon.save();
-        return h.response(coupon)
-    } catch (error) {
-        console.log('error: ', error);
-        return h.response(error)
-        
+const applyCouponCode = async (req, res) => {
+  try {
+    const { code } = req.body;
+    const coupon = await Coupon.findOne({ code, isActive: true });
+
+    if (!coupon) {
+      return res.status(400).json({ message: 'Invalid coupon code' });
     }
-}
 
-const applyCouponCode = async (request, h) =>{
-    try {
-        const {code} = request.payload;
-        const coupon = await Coupon.findOne({code, isActive: true});
-        console.log('coupon: ', coupon);
-
-        if (!coupon) {
-            return h.response({ message: 'Invalid coupon code' }).code(400);
-        }
-
-        if (coupon.expiryDate < new Date()) {
-            return h.response({ message: 'Coupon has expired' }).code(400);
-        }
-
-        if (coupon.usageLimit <= coupon.timesUsed) {
-            return h.response({ message: 'Coupon usage limit exceeded' }).code(400);
-        }
-        coupon.timesUsed++
-        await coupon.save();
-
-        return h.response({ discount: coupon.discount }).code(200);
-    } catch (error) {
-        return h.response(error)
+    if (coupon.expiryDate < new Date()) {
+      return res.status(400).json({ message: 'Coupon has expired' });
     }
-}
 
-module.exports = {createCoupon, applyCouponCode}
+    if (coupon.usageLimit <= coupon.timesUsed) {
+      return res.status(400).json({ message: 'Coupon usage limit exceeded' });
+    }
+    coupon.timesUsed += 1;
+    await coupon.save();
+
+    return res.status(200).json({ discount: coupon.discount });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+module.exports = { createCoupon, applyCouponCode };

@@ -1,32 +1,34 @@
-const jwt = require('@hapi/jwt');
+const jwt = require('jsonwebtoken');
 const User = require('../model/users');
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config();
 
-const protect = async (request, h) => {
-  const token = request.headers.authorization.split(' ')[1]; 
-  if (!token) {
-      return h.response({ message: 'Not authorized, no token' }).code(401)
-  }
+const protect = async (req, res, next) => {
   try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('-password'); 
-      if (!user) {
-          return h.response({ message: 'Not authorized, user not found' }).code(401)
-      }
-      request.user = user;
-      return h.continue;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(401).json({ message: 'Not authorized, user not found' });
+    }
+
+    req.user = user;
+    next();
   } catch (error) {
-      return h.response({ message: 'Not authorized, token failed' }).code(401)
+    return res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };
 
-const admin = (request, h) => {
-  if (request.auth.credentials.user.role === 'admin' || request.auth.credentials.user.role === 'subAdmin' ) {
-      return h.continue;
-  } else {
-      return h.response({ message: 'Not authorized as admin' }).code(403).takeover();
+const admin = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'subAdmin')) {
+    return next();
   }
+  return res.status(403).json({ message: 'Not authorized as admin' });
 };
 
 module.exports = { protect, admin };

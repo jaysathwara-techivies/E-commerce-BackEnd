@@ -1,48 +1,49 @@
-const Category = require('../model/category')
-const Product = require('../model/product')
+const Category = require('../model/category');
+const Product = require('../model/product');
 
-const createCategory = async (request, h) => {
-    try {
-      const { name, description } = request.payload;
-      const category = new Category({ name, description });
-      const savedCategory = await category.save();
-      return h.response(savedCategory).code(201);
-    } catch (error) {
-      return h.response(error).code(500);
-    }
-  };
+const createCategory = async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    const category = new Category({ name, description });
+    const savedCategory = await category.save();
+    return res.status(201).json(savedCategory);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
 
-  const getCategories = async (request, h) => {
-    try {
-      const categories = await Category.find();
-      const categoriesWithFlags = await Promise.all(categories.map(async category => {
+const getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find();
+    const categoriesWithFlags = await Promise.all(
+      categories.map(async (category) => {
         const productsUsingCategory = await Product.find({ category: category.name });
         return {
           ...category.toObject(),
-          ShowDeleteButton: productsUsingCategory.length === 0
+          ShowDeleteButton: productsUsingCategory.length === 0,
         };
-      }));
-      return h.response(categoriesWithFlags).code(200);
-    } catch (error) {
-      return h.response(error).code(500);
-    }
-  };
-  
+      })
+    );
+    return res.status(200).json(categoriesWithFlags);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
 
-  const deleteCategory = async (request, h) => {
-    try {
-      const { id } = request.params;
-      const category = await Category.findById(id);
-  
-      if (!category) {
-        return h.response({ message: 'Category not found'}).code(404);
-      }
-  
-      await Category.findByIdAndDelete(id);
-      return h.response({ message: 'Category deleted successfully'}).code(200);
-    } catch (error) {
-      return h.response(error).code(500);
-    }
-  };
+const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = await Category.findById(id);
 
-  module.exports = {createCategory, getCategories, deleteCategory}
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    await Category.findByIdAndDelete(id);
+    return res.status(200).json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+module.exports = { createCategory, getCategories, deleteCategory };

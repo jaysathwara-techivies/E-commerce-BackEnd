@@ -1,4 +1,4 @@
-const Address = require('../model/address');
+const Address = require('../models/address');
 const mongoose = require('mongoose');
 
 const createAddress = async (req, res) => {

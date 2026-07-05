@@ -19,6 +19,10 @@ const orderSchema = new mongoose.Schema({
         price: {
             type: Number,
             required: true
+        },
+        category: {
+            type: String,
+            required: true
         }
     }],
     total: {
@@ -53,6 +57,10 @@ const orderSchema = new mongoose.Schema({
     chargeId: {
         type:String,
         default: null
+    },
+    userName: {
+        type: String,
+        required:true
     }
     
 });
